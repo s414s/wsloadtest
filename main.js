@@ -15,7 +15,7 @@ class WebSocketClient {
         idNumber++;
         console.log("created client with id:", this.idNumber)
 
-        this.ws = new WebSocket("https://scrumpoker.fly.dev/ws");
+        this.ws = new WebSocket("https://scrumpoker.fly.dev/ws?name=NewPlaya");
         this.ws.addEventListener('open', this.onOpen.bind(this));
         this.ws.addEventListener('message', (event) => { this.handleNewMessage(event) });
         this.ws.addEventListener('close', this.onClose.bind(this));
@@ -23,7 +23,7 @@ class WebSocketClient {
     }
 
     onOpen() { // e: Event
-        console.log('Connection opened for: ', wsClient);
+        console.log('Connection opened for client with Id: ', this.idNumber);
 
         if (this.roomId === "") {
             this.sendMessage({ action: "create-room" })
@@ -53,7 +53,7 @@ class WebSocketClient {
             };
 
             toggle = !toggle
-            wsClient.send(JSON.stringify(message));
+            this.ws.send(JSON.stringify(message));
             console.log('Sent message: ', message);
         }, 1000);
     }
@@ -129,7 +129,7 @@ for (let i = 0; i < numberOfRooms; i++) {
     setTimeout(() => {
         const newClient = new WebSocketClient("");
         clients.push(newClient);
-    }, 300)
+    }, 1000)
 }
 
 // Start the game and add the rest of the players
@@ -149,3 +149,7 @@ clients.forEach(x => {
 
 // Start sending messages
 clients.forEach(x => { x.sendMessage() })
+
+while (true) {
+    setInterval(() => console.info("waiting"), 1000)
+}
