@@ -2,15 +2,11 @@ const WebSocket = require('ws');
 
 var idNumber = 1;
 
-var numberOfRooms = 3;
-var numberOfClientsPerRoom = 3;
+var numberOfRooms = 100;
+var numberOfClientsPerRoom = 7;
 var clients = [];
 
 class WebSocketClient {
-    // ws;
-    // idNumber;
-    // roomId;
-
     constructor(
         roomId = "",
     ) {
@@ -51,7 +47,7 @@ class WebSocketClient {
     startMessaging() {
         // Send a message every second
         setInterval(() => {
-            console.log('Sending message from client: ', this.idNumber);
+            // console.log('Sending message from client: ', this.idNumber);
             let toggle = true
 
             const message = {
@@ -68,11 +64,12 @@ class WebSocketClient {
                 console.log('WebSocket not open YET');
             }
 
-        }, 1000);
+        }, 5000);
     }
 
     onError(e) {
-        console.error('WebSocket error:', e);
+        // console.error('WebSocket error:', e);
+        console.error('WebSocket error');
     }
 
     close() {
@@ -122,7 +119,8 @@ class WebSocketClient {
     }
 
     handleErrorMessage(message) {
-        console.log('Error message received:', message.msg);
+        // console.log('Error message received:', message.msg);
+        console.log('Error message received');
     }
 
     sendMessage(msg) {
@@ -145,13 +143,11 @@ class WebSocketClient {
 
 // Create the rooms
 for (let i = 0; i < numberOfRooms; i++) {
-    console.log("creating rooms")
-    const newClient = new WebSocketClient("");
-    clients.push(newClient);
-    // setTimeout(() => {
-    //     const newClient = new WebSocketClient("");
-    //     clients.push(newClient);
-    // }, 1000)
+    setTimeout(() => {
+        console.log("creating rooms")
+        const newClient = new WebSocketClient("");
+        clients.push(newClient);
+    }, 1000)
 }
 
-setInterval(() => console.info("total number of active users", clients), 3000)
+setInterval(() => console.info("===================================total number of active users", clients.length), 3000)
