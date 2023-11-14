@@ -2,6 +2,10 @@ const WebSocket = require('ws');
 
 var idNumber = 1;
 
+var numberOfRooms = 3;
+var numberOfClientsPerRoom = 3;
+var clients = [];
+
 class WebSocketClient {
     // ws;
     // idNumber;
@@ -20,6 +24,9 @@ class WebSocketClient {
         this.ws.addEventListener('message', (event) => { this.handleNewMessage(event) });
         this.ws.addEventListener('close', this.onClose.bind(this));
         this.ws.addEventListener('error', this.onError.bind(this));
+
+
+        this.startMessaging();
     }
 
     onOpen() { // e: Event
@@ -53,8 +60,14 @@ class WebSocketClient {
             };
 
             toggle = !toggle
-            this.ws.send(JSON.stringify(message));
-            console.log('Sent message: ', message);
+
+            if (this.ws.readyState === WebSocket.OPEN) {
+                this.ws.send(JSON.stringify(message));
+                // console.log('Sent message: ', message);
+            } else {
+                console.log('WebSocket not open YET');
+            }
+
         }, 1000);
     }
 
@@ -71,23 +84,32 @@ class WebSocketClient {
         const message = JSON.parse(e.data);
 
         switch (message.status) {
-            case Code.JoinRoomAction:
+            case "join-room":
                 this.handleOkMessage(message);
                 break;
-            case Code.CreateRoomAction:
-                this.roomId = message.msg;
-                console.log("room created with id", message.msg)
+            case "create-room":
+                console.log("create-room message received on client id", this.idNumber)
+                this.roomId = message.id;
+
+                for (let i = 0; i < numberOfClientsPerRoom; i++) {
+                    setTimeout(() => {
+                        console.log("creating new user", idNumber, "from user", this.idNumber, "for room", message.id)
+                        const wsClient = new WebSocketClient(message.id);
+                        clients.push(wsClient);
+                    }, 500)
+                }
+
                 this.handleOkMessage(message)
                 break;
-            case Code.ResetRoomAction:
+            case "reset-room":
                 this.setPick("0");
                 this.handleOkMessage(message);
                 break;
-            case Code.OkCode:
+            case "ok":
                 this.handleOkMessage(message);
                 break;
-            case Code.ErrorCode:
-                this.handleErrorMessage(event);
+            case "error":
+                this.handleErrorMessage(message);
                 break;
             default:
                 break;
@@ -95,11 +117,12 @@ class WebSocketClient {
     }
 
     handleOkMessage(event) {
-        console.log('Ok message received:');
+        console.log('Ok message received');
+        // this.startMessaging();
     }
 
-    handleErrorMessage(event) {
-        console.log('Error message received:', event.msg);
+    handleErrorMessage(message) {
+        console.log('Error message received:', message.msg);
     }
 
     sendMessage(msg) {
@@ -120,36 +143,15 @@ class WebSocketClient {
 
 }
 
-const numberOfRooms = 100;
-const numberOfClientsPerRoom = 10;
-const clients = [];
-
 // Create the rooms
 for (let i = 0; i < numberOfRooms; i++) {
-    setTimeout(() => {
-        const newClient = new WebSocketClient("");
-        clients.push(newClient);
-    }, 1000)
+    console.log("creating rooms")
+    const newClient = new WebSocketClient("");
+    clients.push(newClient);
+    // setTimeout(() => {
+    //     const newClient = new WebSocketClient("");
+    //     clients.push(newClient);
+    // }, 1000)
 }
 
-// Start the game and add the rest of the players
-clients.forEach(x => {
-    setTimeout(() => {
-        x.sendMessage({ action: "reset-room" })
-
-        const roomId = x.roomId;
-        for (let i = 0; i < numberOfClientsPerRoom; i++) {
-            setTimeout(() => {
-                const wsClient = new WebSocketClient(roomId);
-                clients.push(wsClient);
-            }, 300)
-        }
-    }, 200)
-})
-
-// Start sending messages
-clients.forEach(x => { x.sendMessage() })
-
-while (true) {
-    setInterval(() => console.info("waiting"), 1000)
-}
+setInterval(() => console.info("total number of active users", clients), 3000)
