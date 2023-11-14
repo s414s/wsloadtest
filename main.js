@@ -2,8 +2,8 @@ const WebSocket = require('ws');
 
 var idNumber = 1;
 
-var numberOfRooms = 100;
-var numberOfClientsPerRoom = 7;
+var numberOfRooms = 5;
+var numberOfClientsPerRoom = 3;
 var clients = [];
 
 class WebSocketClient {
@@ -17,7 +17,10 @@ class WebSocketClient {
 
         this.ws = new WebSocket("https://scrumpoker.fly.dev/ws?name=NewPlaya");
         this.ws.addEventListener('open', this.onOpen.bind(this));
-        this.ws.addEventListener('message', (event) => { this.handleNewMessage(event) });
+        this.ws.addEventListener('message', (event) => {
+            console.log('message received on client ', this.idNumber);
+            this.handleNewMessage(event)
+        });
         this.ws.addEventListener('close', this.onClose.bind(this));
         this.ws.addEventListener('error', this.onError.bind(this));
 
@@ -47,7 +50,7 @@ class WebSocketClient {
     startMessaging() {
         // Send a message every second
         setInterval(() => {
-            // console.log('Sending message from client: ', this.idNumber);
+            console.log('Sending message from client: ', this.idNumber);
             let toggle = true
 
             const message = {
@@ -93,7 +96,7 @@ class WebSocketClient {
                         console.log("creating new user", idNumber, "from user", this.idNumber, "for room", message.id)
                         const wsClient = new WebSocketClient(message.id);
                         clients.push(wsClient);
-                    }, 500)
+                    }, 2000)
                 }
 
                 this.handleOkMessage(message)
@@ -103,6 +106,7 @@ class WebSocketClient {
                 this.handleOkMessage(message);
                 break;
             case "ok":
+                console.log("ok message received from client", this.idNumber);
                 this.handleOkMessage(message);
                 break;
             case "error":
@@ -114,7 +118,7 @@ class WebSocketClient {
     }
 
     handleOkMessage(event) {
-        console.log('Ok message received');
+        // console.log('Ok message received');
         // this.startMessaging();
     }
 
@@ -144,10 +148,17 @@ class WebSocketClient {
 // Create the rooms
 for (let i = 0; i < numberOfRooms; i++) {
     setTimeout(() => {
-        console.log("creating rooms")
+        console.log("creating new creartor user")
         const newClient = new WebSocketClient("");
         clients.push(newClient);
-    }, 1000)
+    }, 2000)
 }
 
-setInterval(() => console.info("===================================total number of active users", clients.length), 3000)
+setInterval(() => console.info("==========================total number of users", clients.length), 3000)
+setInterval(() => {
+    console.info(
+        "====================total number of connected users",
+        clients.filter(x => x.ws.readyState === WebSocket.OPEN).length)
+},
+    3000
+)
