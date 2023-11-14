@@ -1,66 +1,20 @@
-
-// Define the target WebSocket endpoint
-const wsEndpoint = 'wss://localhost/ws';
-
-// Function to create a new WebSocket client and send messages every second
-function createClientInRoomAndSendMessages() {
-    // Create a new WebSocket client
-    const wsClient = new WebSocket(wsEndpoint);
-
-    // Open connection event
-    wsClient.onopen = function () {
-        console.log('Connection opened for: ', wsClient);
-
-        // Send a message every second
-        setInterval(() => {
-            const message = { action: 'update-card', msg: '1' };
-            wsClient.send(JSON.stringify(message));
-            console.log('Sent message: ', message);
-        }, 1000);
-    };
-
-    // Handle messages from the server
-    wsClient.onmessage = function (event) {
-        console.log('Received message: ', event.data);
-    };
-
-    // Handle any errors that occur
-    wsClient.onerror = function (error) {
-        console.error('WebSocket Error: ', error);
-    };
-
-    // Handle the WebSocket closing
-    wsClient.onclose = function () {
-        console.log('WebSocket connection closed');
-    };
-}
-
-// Specify the number of WebSocket clients you want to create
-const numberOfClients = 10;
-
-// Create multiple WebSocket clients
-for (let i = 0; i < numberOfClients; i++) {
-    createClientAndSendMessages();
-}
-
-
-
-
-
-
-
+var idNumber = 1;
 
 export class WebSocketClient {
     ws;
     idNumber;
     roomId;
-    serverUrl = "https://scrumpoker.fly.io";
+    serverUrl = "https://scrumpoker.fly.io/ws";
 
     constructor(
-        idNumber,
         roomId = "",
     ) {
         this.roomId = roomId;
+        this.idNumber = idNumber;
+        idNumber++;
+        console.log("created client with id:", this.idNumber)
+
+        this.ws = new WebSocket(this.serverUrl);
         this.ws.addEventListener('open', this.onOpen.bind(this));
         this.ws.addEventListener('message', (event) => { this.handleNewMessage(event) });
         this.ws.addEventListener('close', this.onClose.bind(this));
@@ -70,7 +24,9 @@ export class WebSocketClient {
     onOpen() { // e: Event
         console.log('Connection opened for: ', wsClient);
 
-        if (this.roomId !== "") {
+        if (this.roomId === "") {
+            this.sendMessage({ action: "create-room" })
+        } else {
             this.joinRoom(this.roomId)
         }
 
@@ -116,6 +72,8 @@ export class WebSocketClient {
                 this.handleOkMessage(message);
                 break;
             case Code.CreateRoomAction:
+                this.roomId = message.msg;
+                console.log("room created with id", message.msg)
                 this.handleOkMessage(message)
                 break;
             case Code.ResetRoomAction:
@@ -159,7 +117,29 @@ export class WebSocketClient {
 
 }
 
-for (let i = 0; i < 1000; i++) {
-    const wsClient = new wsClient();
+const numberOfRooms = 100;
+const numberOfClientsPerRoom = 10;
+const clients = [];
 
+// Create the rooms
+for (let i = 0; i < numberOfRooms; i++) {
+    setTimeout(() => {
+        const wsClient = new wsClient("");
+        clients.push(wsClient);
+    }, 200)
 }
+
+// Start the game and add the rest of the players
+clients.forEach(x => {
+    setTimeout(() => {
+        x.sendMessage({ action: "start-game" })
+
+        const roomId = x.roomId;
+        for (let i = 0; i < numberOfClientsPerRoom; i++) {
+            setTimeout(() => {
+                const wsClient = new wsClient(roomId);
+                clients.push(wsClient);
+            }, 200)
+        }
+    }, 200)
+})
