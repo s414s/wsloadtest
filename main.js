@@ -1,10 +1,11 @@
+const WebSocket = require('ws');
+
 var idNumber = 1;
 
-export class WebSocketClient {
-    ws;
-    idNumber;
-    roomId;
-    serverUrl = "https://scrumpoker.fly.io/ws";
+class WebSocketClient {
+    // ws;
+    // idNumber;
+    // roomId;
 
     constructor(
         roomId = "",
@@ -14,7 +15,7 @@ export class WebSocketClient {
         idNumber++;
         console.log("created client with id:", this.idNumber)
 
-        this.ws = new WebSocket(this.serverUrl);
+        this.ws = new WebSocket("https://scrumpoker.fly.dev/ws");
         this.ws.addEventListener('open', this.onOpen.bind(this));
         this.ws.addEventListener('message', (event) => { this.handleNewMessage(event) });
         this.ws.addEventListener('close', this.onClose.bind(this));
@@ -30,6 +31,17 @@ export class WebSocketClient {
             this.joinRoom(this.roomId)
         }
 
+    }
+
+    onClose(e) {
+        if (e.wasClean) {
+            console.log(`WebSocket connection closed cleanly, code=${e.code}, reason=${e.reason}`);
+        } else {
+            console.error('WebSocket connection abruptly closed');
+        }
+    }
+
+    startMessaging() {
         // Send a message every second
         setInterval(() => {
             console.log('Sending message from client: ', this.idNumber);
@@ -44,15 +56,6 @@ export class WebSocketClient {
             wsClient.send(JSON.stringify(message));
             console.log('Sent message: ', message);
         }, 1000);
-
-    }
-
-    onClose(e) {
-        if (e.wasClean) {
-            console.log(`WebSocket connection closed cleanly, code=${e.code}, reason=${e.reason}`);
-        } else {
-            console.error('WebSocket connection abruptly closed');
-        }
     }
 
     onError(e) {
@@ -124,22 +127,25 @@ const clients = [];
 // Create the rooms
 for (let i = 0; i < numberOfRooms; i++) {
     setTimeout(() => {
-        const wsClient = new wsClient("");
-        clients.push(wsClient);
-    }, 200)
+        const newClient = new WebSocketClient("");
+        clients.push(newClient);
+    }, 300)
 }
 
 // Start the game and add the rest of the players
 clients.forEach(x => {
     setTimeout(() => {
-        x.sendMessage({ action: "start-game" })
+        x.sendMessage({ action: "reset-room" })
 
         const roomId = x.roomId;
         for (let i = 0; i < numberOfClientsPerRoom; i++) {
             setTimeout(() => {
-                const wsClient = new wsClient(roomId);
+                const wsClient = new WebSocketClient(roomId);
                 clients.push(wsClient);
-            }, 200)
+            }, 300)
         }
     }, 200)
 })
+
+// Start sending messages
+clients.forEach(x => { x.sendMessage() })

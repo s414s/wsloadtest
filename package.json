@@ -1,0 +1,14 @@
+{
+  "name": "wsloadtest",
+  "version": "1.0.0",
+  "description": "just a web socket load tester",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ws": "^8.14.2"
+  }
+}
