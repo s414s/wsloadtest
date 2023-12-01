@@ -2,8 +2,8 @@ const WebSocket = require('ws');
 
 var idNumber = 1;
 
-var numberOfRooms = 5;
-var numberOfClientsPerRoom = 3;
+var numberOfRooms = 10;
+var numberOfClientsPerRoom = 9;
 var clients = [];
 
 class WebSocketClient {
@@ -15,15 +15,17 @@ class WebSocketClient {
         idNumber++;
         console.log("created client with id:", this.idNumber)
 
-        this.ws = new WebSocket("https://scrumpoker.fly.dev/ws?name=NewPlaya");
+        const host = "https://scrumnpoker2.fly.dev";
+
+        // this.ws = new WebSocket("https://scrumpoker.fly.dev/ws?name=NewPlaya");
+        // this.ws = new WebSocket("http://localhost:8080/ws?name=NewPlaya");
+        // this.ws = new WebSocket("https://scrumnpoker.fly.dev/ws?name=NewPlaya");
+        this.ws = new WebSocket(`${host}/ws?name=NewPlaya`);
+
         this.ws.addEventListener('open', this.onOpen.bind(this));
-        this.ws.addEventListener('message', (event) => {
-            console.log('message received on client ', this.idNumber);
-            this.handleNewMessage(event)
-        });
+        this.ws.addEventListener('message', (event) => { this.handleNewMessage(event) });
         this.ws.addEventListener('close', this.onClose.bind(this));
         this.ws.addEventListener('error', this.onError.bind(this));
-
 
         this.startMessaging();
     }
@@ -50,11 +52,11 @@ class WebSocketClient {
     startMessaging() {
         // Send a message every second
         setInterval(() => {
-            console.log('Sending message from client: ', this.idNumber);
+            // console.log('Sending message from client: ', this.idNumber);
             let toggle = true
 
             const message = {
-                action: 'update-card',
+                action: 'update-points',
                 msg: toggle ? '1' : '3'
             };
 
@@ -67,7 +69,7 @@ class WebSocketClient {
                 console.log('WebSocket not open YET');
             }
 
-        }, 5000);
+        }, 10000);
     }
 
     onError(e) {
@@ -80,7 +82,23 @@ class WebSocketClient {
     }
 
     handleNewMessage(e) {
-        console.log('WebSocket message received on client ', this.idNumber);
+        // console.log('message received on client ', this.idNumber ?? "idNumber sin definir");
+        // console.log("m en cuestion", e.data);
+        // console.log("======PARSEO======");
+        if (e.data === undefined) {
+            console.log("undefined found");
+        }
+
+        try {
+            JSON.parse(e.data);
+        } catch (error) {
+            console.error("============");
+            // console.error('ERROR', error);
+            console.error("============");
+            // console.error(e.data)
+            return
+        }
+
         const message = JSON.parse(e.data);
 
         switch (message.status) {
@@ -106,7 +124,7 @@ class WebSocketClient {
                 this.handleOkMessage(message);
                 break;
             case "ok":
-                console.log("ok message received from client", this.idNumber);
+                // console.log("ok message received from client", this.idNumber);
                 this.handleOkMessage(message);
                 break;
             case "error":
@@ -123,8 +141,8 @@ class WebSocketClient {
     }
 
     handleErrorMessage(message) {
-        // console.log('Error message received:', message.msg);
-        console.log('Error message received');
+        console.log('Error message received:', message.msg);
+        // console.log('Error message received');
     }
 
     sendMessage(msg) {
@@ -151,7 +169,7 @@ for (let i = 0; i < numberOfRooms; i++) {
         console.log("creating new creartor user")
         const newClient = new WebSocketClient("");
         clients.push(newClient);
-    }, 2000)
+    }, 5000)
 }
 
 setInterval(() => console.info("==========================total number of users", clients.length), 3000)
